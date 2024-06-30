@@ -1,3 +1,9 @@
+@import hexlet.code.dto.BasePage
+@import gg.jte.Content
+
+@param Content content
+@param BasePage page = null
+
 <!doctype html>
 <html lang="en">
     <head>
@@ -7,6 +13,15 @@
         <title>Анализатор страниц</title>
     </head>
     <body>
-        <h1>Hello world!</h1>
+        @if(page != null && page.getFlash() != null)
+            <div class="alert ${page.getFlashStyle()}" role="alert">
+                ${page.getFlash()}
+            </div>
+        @endif
+        <div class="menu">
+        </div>
+        ${content}
+        <div class="footer">
+        </div>
     </body>
 </html>
