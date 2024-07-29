@@ -1,5 +1,6 @@
 @import hexlet.code.dto.BasePage
 @import gg.jte.Content
+@import hexlet.code.utils.NamedRoutes
 
 @param Content content
 @param BasePage page = null
@@ -13,15 +14,21 @@
         <title>Анализатор страниц</title>
     </head>
     <body>
+        <div class="menu">
+            <p>
+                <a href="${NamedRoutes.mainPath()}">Анализатор страниц</a>
+                <a href="${NamedRoutes.mainPath()}">Главная</a>
+                <a href="${NamedRoutes.urlsPath()}">Сайты</a>
+            </p>
+        </div>
         @if(page != null && page.getFlash() != null)
             <div class="alert ${page.getFlashStyle()}" role="alert">
                 ${page.getFlash()}
             </div>
         @endif
-        <div class="menu">
-        </div>
         ${content}
         <div class="footer">
+            <p>created by <a href="https://github.com/dmanufriev/">Dmitry Anufriev</a></p>
         </div>
     </body>
 </html>

@@ -5,14 +5,21 @@ import com.zaxxer.hikari.HikariDataSource;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.resolve.ResourceCodeResolver;
+import hexlet.code.controller.UrlsController;
 import hexlet.code.dto.MainPage;
 import hexlet.code.repository.BaseRepository;
+import hexlet.code.utils.NamedRoutes;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.stream.Collectors;
 
 import static io.javalin.rendering.template.TemplateUtil.model;
 
@@ -42,6 +49,15 @@ public class App {
         }
 
         var dataSource = new HikariDataSource(hikariConfig);
+        // TODO При работе через postgres, мы же должны инициализировать БД только один раз при запуске???
+        // TODO Как правильно это сделать?
+        // Загружаем Schema.sql и выполняем запрос
+        var sql = App.readResourceFile("schema.sql");
+        log.info(sql);
+        try (var connection = dataSource.getConnection();
+             var statement = connection.createStatement()) {
+            statement.execute(sql);
+        }
         BaseRepository.setDataSource(dataSource);
 
         Javalin app = Javalin.create(config -> {
@@ -53,10 +69,13 @@ public class App {
             ctx.contentType("text/html; charset=utf-8");
         });
 
-        app.get("/", ctx -> {
+        app.get(NamedRoutes.mainPath(), ctx -> {
             var page = new MainPage(false, null);
             ctx.render("index.jte", model("page", page));
         });
+
+        app.get(NamedRoutes.urlsPath(), UrlsController::index);
+        app.post(NamedRoutes.urlsPath(), UrlsController::create);
 
         return app;
     }
@@ -64,6 +83,13 @@ public class App {
     private static int getPort() {
         String port = System.getenv().getOrDefault("PORT", "7070");
         return Integer.valueOf(port);
+    }
+
+    private static String readResourceFile(String fileName) throws IOException {
+        var inputStream = App.class.getClassLoader().getResourceAsStream(fileName);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            return reader.lines().collect(Collectors.joining("\n"));
+        }
     }
 
     // Чтобы при проверке приложения автотестами шаблоны подгружались из нужного места,
