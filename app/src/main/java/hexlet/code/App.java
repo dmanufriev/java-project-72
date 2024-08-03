@@ -43,16 +43,16 @@ public class App {
 
         var hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(jdbcDatabaseUrl);
+        String sql;
         if (dbms.equals("postgresql")) {
             hikariConfig.setUsername(System.getenv("USERNAME"));
             hikariConfig.setPassword(System.getenv("PASSWORD"));
+            sql = App.readResourceFile("schema_psql.sql");
+        } else {
+            sql = App.readResourceFile("schema_h2.sql");
         }
 
         var dataSource = new HikariDataSource(hikariConfig);
-        // TODO При работе через postgres, мы же должны инициализировать БД только один раз при запуске???
-        // TODO Как правильно это сделать?
-        // Загружаем Schema.sql и выполняем запрос
-        var sql = App.readResourceFile("schema.sql");
         log.info(sql);
         try (var connection = dataSource.getConnection();
              var statement = connection.createStatement()) {
