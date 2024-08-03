@@ -6,7 +6,7 @@
     page = page,
     content = @`
         <h1>Сайты</h1>
-        <table>
+        <table class="table table-bordered">
             <thead>
                 <tr>
                     <th>ID</th>

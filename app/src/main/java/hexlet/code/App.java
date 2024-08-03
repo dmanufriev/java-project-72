@@ -71,11 +71,15 @@ public class App {
 
         app.get(NamedRoutes.mainPath(), ctx -> {
             var page = new MainPage(false, null);
+            page.setFlash(ctx.consumeSessionAttribute("flash"));
+            page.setFlashStyle(ctx.consumeSessionAttribute("flashStyle"));
             ctx.render("index.jte", model("page", page));
         });
 
         app.get(NamedRoutes.urlsPath(), UrlsController::index);
         app.post(NamedRoutes.urlsPath(), UrlsController::create);
+        app.get(NamedRoutes.urlPath("{id}"), UrlsController::show);
+        app.post(NamedRoutes.urlPath("{id}"), UrlsController::update);
 
         return app;
     }
