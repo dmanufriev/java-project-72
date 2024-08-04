@@ -61,19 +61,26 @@ public class UrlRepository extends BaseRepository {
         }
     }
 
-    // TODO Организовать получение не всего списка, сделать разбивку по страницам (paging)
     public static List<Url> getEntities() throws SQLException {
-        var sql = "SELECT * FROM urls";
+        StringBuilder sqlBuilder = new StringBuilder()
+                .append("WITH last_checks AS ( SELECT DISTINCT ON (url_id) url_id, status_code, created_at")
+                .append(" FROM url_checks AS c ORDER BY url_id, created_at DESC )")
+                .append(" SELECT u.id, u.name, u.created_at, lc.created_at AS checked_at, lc.status_code")
+                .append(" FROM urls AS u LEFT JOIN last_checks AS lc ON u.id = lc.url_id ORDER BY u.id DESC");
         try (var conn = dataSource.getConnection();
-             var stmt = conn.prepareStatement(sql)) {
+             var stmt = conn.prepareStatement(sqlBuilder.toString())) {
             var resultSet = stmt.executeQuery();
             var result = new ArrayList<Url>();
             while (resultSet.next()) {
                 var id = resultSet.getLong("id");
                 var name = resultSet.getString("name");
                 var createdAt = resultSet.getTimestamp("created_at");
+                var checkedAt = resultSet.getTimestamp("checked_at");
+                var statusCode = resultSet.getInt("status_code");
                 var url = new Url(name, createdAt);
                 url.setId(id);
+                url.setCheckedAt(checkedAt);
+                url.setStatusCode(statusCode);
                 result.add(url);
             }
             return result;
