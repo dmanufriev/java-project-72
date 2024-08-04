@@ -4,6 +4,7 @@ import hexlet.code.model.Url;
 import hexlet.code.model.UrlCheck;
 import hexlet.code.repository.UrlCheckRepository;
 import hexlet.code.utils.NamedRoutes;
+import hexlet.code.utils.Constants;
 import io.javalin.http.NotFoundResponse;
 import hexlet.code.repository.UrlRepository;
 import hexlet.code.dto.urls.UrlsPage;
@@ -28,8 +29,8 @@ public class UrlsController {
     public static void index(Context ctx) throws SQLException {
         var urlsList = UrlRepository.getEntities();
         var page = new UrlsPage(urlsList);
-        page.setFlash(ctx.consumeSessionAttribute("flash"));
-        page.setFlashStyle(ctx.consumeSessionAttribute("flashStyle"));
+        page.setFlash(ctx.consumeSessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH));
+        page.setFlashStyle(ctx.consumeSessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH_STYLE));
         ctx.render("urls/index.jte", model("page", page));
     }
 
@@ -40,8 +41,8 @@ public class UrlsController {
                     .orElseThrow(() -> new NotFoundResponse("Entity with id = " + id + " not found"));
         var urlChecks = UrlCheckRepository.getEntities(id);
         var page = new UrlPage(url, urlChecks);
-        page.setFlash(ctx.consumeSessionAttribute("flash"));
-        page.setFlashStyle(ctx.consumeSessionAttribute("flashStyle"));
+        page.setFlash(ctx.consumeSessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH));
+        page.setFlashStyle(ctx.consumeSessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH_STYLE));
         ctx.render("urls/show.jte", model("page", page));
     }
 
@@ -50,10 +51,6 @@ public class UrlsController {
         try {
             var uri = new URI(ctx.formParam("url"));
             var url = uri.toURL();
-            /* TODO
-            if (!Pattern.matches(".\..", urlFromSite.getHost())) {
-                throw new IllegalArgumentException();
-            }*/
             var builder = new StringBuilder();
             builder.append(url.getProtocol()).append("://").append(url.getHost());
             if (url.getPort() > 0) {
@@ -63,21 +60,22 @@ public class UrlsController {
 
             var urls = UrlRepository.search(urlStr);
             if (!urls.isEmpty()) {
-                ctx.sessionAttribute("flash", "Страница уже существует");
-                ctx.sessionAttribute("flashStyle", "alert-info");
+                ctx.sessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH, Constants.URL_EXISTS_ALREADY);
+                ctx.sessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH_STYLE, Constants.FLASH_STYLE_INFO);
             } else {
                 UrlRepository.save(new Url(urlStr, Timestamp.from(Instant.now())));
-                ctx.sessionAttribute("flash", "Страница успешно добавлена");
-                ctx.sessionAttribute("flashStyle", "alert-success");
+                ctx.sessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH, Constants.URL_IS_ADDED_SUCCESSFULLY);
+                ctx.sessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH_STYLE, Constants.FLASH_STYLE_SUCCESS);
             }
             ctx.redirect(NamedRoutes.urlsPath());
         } catch (Exception e) {
-            ctx.sessionAttribute("flash", "Некорректный URL");
-            ctx.sessionAttribute("flashStyle", "alert-danger");
+            ctx.sessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH, Constants.URL_IS_INCORRECT);
+            ctx.sessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH_STYLE, Constants.FLASH_STYLE_DANGER);
             ctx.redirect(NamedRoutes.mainPath());
         }
     }
 
+    // Проверка сайта по текущему адресу
     public static void check(Context ctx) {
         var id = ctx.pathParamAsClass("id", Long.class).get();
         try {
@@ -113,11 +111,11 @@ public class UrlsController {
             }
 
             UrlCheckRepository.save(urlCheck);
-            ctx.sessionAttribute("flash", "Страница успешно проверена");
-            ctx.sessionAttribute("flashStyle", "alert-success");
+            ctx.sessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH, Constants.PAGE_IS_CHECKED_SUCCESSFULLY);
+            ctx.sessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH_STYLE, Constants.FLASH_STYLE_SUCCESS);
         } catch (Exception e) {
-            ctx.sessionAttribute("flash", "Некорректный адрес");
-            ctx.sessionAttribute("flashStyle", "alert-danger");
+            ctx.sessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH, Constants.PAGE_IS_INCORRECT);
+            ctx.sessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH_STYLE, Constants.FLASH_STYLE_DANGER);
         }
         ctx.redirect(NamedRoutes.urlPath(id));
     }

@@ -6,8 +6,10 @@ import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.resolve.ResourceCodeResolver;
 import hexlet.code.controller.UrlsController;
+import hexlet.code.dto.BasePage;
 import hexlet.code.dto.MainPage;
 import hexlet.code.repository.BaseRepository;
+import hexlet.code.utils.Constants;
 import hexlet.code.utils.NamedRoutes;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
@@ -53,9 +55,9 @@ public class App {
         }
 
         var dataSource = new HikariDataSource(hikariConfig);
-        log.info(sql);
         try (var connection = dataSource.getConnection();
              var statement = connection.createStatement()) {
+            log.info(sql);
             statement.execute(sql);
         }
         BaseRepository.setDataSource(dataSource);
@@ -64,18 +66,14 @@ public class App {
             config.bundledPlugins.enableDevLogging();
             config.fileRenderer(new JavalinJte(createTemplateEngine()));
         });
-
-        app.before(ctx -> {
-            ctx.contentType("text/html; charset=utf-8");
-        });
+        app.before(ctx -> ctx.contentType("text/html; charset=utf-8"));
 
         app.get(NamedRoutes.mainPath(), ctx -> {
-            var page = new MainPage(false, null);
-            page.setFlash(ctx.consumeSessionAttribute("flash"));
-            page.setFlashStyle(ctx.consumeSessionAttribute("flashStyle"));
+            var page = new MainPage();
+            page.setFlash(ctx.consumeSessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH));
+            page.setFlashStyle(ctx.consumeSessionAttribute(Constants.SESSION_ATTRIBUTE_FLASH_STYLE));
             ctx.render("index.jte", model("page", page));
         });
-
         app.get(NamedRoutes.urlsPath(), UrlsController::index);
         app.post(NamedRoutes.urlsPath(), UrlsController::create);
         app.get(NamedRoutes.urlPath("{id}"), UrlsController::show);

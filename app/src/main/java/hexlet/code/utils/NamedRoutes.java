@@ -6,7 +6,6 @@ public class NamedRoutes {
         return "/";
     }
 
-    // Urls
     public static String urlsPath() {
         return "/urls";
     }
